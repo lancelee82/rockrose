@@ -70,8 +70,6 @@ def main():
         'lr': 1e-5,  #1e-4,  # 1e-6
     }
     model = rr_model_a3cc.RRModelA3CConvPV(md_cfg)
-    #model.load('models_saved/a3c_flibird_3c_1_p.h5',
-    #           'models_saved/a3c_flibird_3c_1_v.h5')
 
     trnr_cfg = {
         'thread_n': TRAINER_THREAD_N,

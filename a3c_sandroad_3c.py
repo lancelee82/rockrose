@@ -16,7 +16,7 @@ from bluegym import env_bluelake
 
 
 ENV_GAME_NAME = 'Sandroad-v0'
-TRAINER_THREAD_N = 10#4
+TRAINER_THREAD_N = 16#10#4
 
 
 def env_reg():
@@ -24,7 +24,9 @@ def env_reg():
         'gymroad', (640, 480),
         ENV_GAME_NAME,
         obs_type='image',
-        frameskip=(1, 2)  # (1, 6)
+        frameskip=(1, 2)
+        #frameskip=(1, 3)
+        #frameskip=(1, 5)
     )
 
 
@@ -60,17 +62,17 @@ def main():
     md_cfg = {
         'input_shape': (4, 84, 84),
         'actn': actn,
-        'lr': 1e-5,  #1e-4,  # 1e-6
+        'lr': 5e-5,  # 1e-5,  #1e-4,  # 1e-6
     }
     model = rr_model_a3cc.RRModelA3CConvPV(md_cfg)
-    #model.load('models_saved/a3c_sandroad_3c_1_p.h5',
-    #           'models_saved/a3c_sandroad_3c_1_v.h5')
 
     trnr_cfg = {
         'thread_n': TRAINER_THREAD_N,
         #'if_render': True,
-        'model_saved_file_p': 'models_saved/a3c_sandroad_3c_1_p.h5',
+        'model_saved_file_p': 'models_saved/a3c_sandroad_3c_1_p.h5',  # reward_24
         'model_saved_file_v': 'models_saved/a3c_sandroad_3c_1_v.h5',
+        #'model_saved_file_p': 'models_saved/a3c_sandroad_3c_2_p.h5',  # reward_25
+        #'model_saved_file_v': 'models_saved/a3c_sandroad_3c_2_v.h5',
         'model_saved_per': 100,
     }
     if 1:

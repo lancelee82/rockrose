@@ -22,7 +22,7 @@ from keras import backend as K
 import base as rr_model_base
 
 
-def rr_fn_conv_w_init(shape, name, scl=0.01):
+def rr_fn_conv_w_init(shape, name, scl=0.01, *args, **kwargs):
     return normal(shape, scale=scl, name=name)
 
 
@@ -35,13 +35,14 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
         self.lr = self.cfg.get('lr', 1e-6)
         self.loss_name = self.cfg.get('loss_name', 'mse')
         self.batch_n = self.cfg.get('batch_n', 32)
+        self.p_entropy_beta = self.cfg.get('p_entropy_beta', 0.01)
 
         self.model_init()
 
         self.graph_init()
 
 
-    def model_init(self):
+    def model_init__1(self):
 
         inputs = Input(shape=self.input_shape)
         shared = Convolution2D(name="conv1", nb_filter=16, nb_row=8, nb_col=8, subsample=(4,4), activation='relu', border_mode='same')(inputs)
@@ -68,18 +69,16 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
 
         adam = Adam(lr=self.lr)
 
-        ##pv_loss = self.a3c_pv_loss__1(self.policy_network, self.value_network, self.R_t, self.a_t)
-        pv_loss = self.a3c_pv_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        p_loss = self.a3c_p_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
         v_loss = self.a3c_v_loss(self.policy_network, self.value_network, self.R_t)
 
-        self.policy_network.compile(loss=pv_loss, optimizer=adam)
-        #self.value_network.compile(loss=pv_loss, optimizer=adam)
+        self.policy_network.compile(loss=p_loss, optimizer=adam)
         self.value_network.compile(loss=v_loss, optimizer=adam)
 
         return self.policy_network, self.value_network
 
 
-    def model_init_2(self):
+    def model_init(self):
 
         #in_img = Input(shape=self.input_shape)
 
@@ -124,13 +123,69 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
 
         adam = Adam(lr=self.lr)
 
-        pv_loss = self.a3c_pv_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        #p_loss = self.a3c_p_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        p_loss = self.a3c_p_loss_ent(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
         v_loss = self.a3c_v_loss(self.policy_network, self.value_network, self.R_t)
 
-        self.policy_network.compile(loss=pv_loss, optimizer=adam)
+        self.policy_network.compile(loss=p_loss, optimizer=adam)
         self.value_network.compile(loss=v_loss, optimizer=adam)
 
         return self.policy_network, self.value_network
+
+
+    def a3c_p_loss_ent(self, p_network, v_network, R_t, a_t, v_t):
+
+        def _inner_loss(y_true, y_pred, *args, **kwargs):
+            """
+            """
+            y_clip = K.clip(y_pred, 1e-20, 1.0)
+
+            log_pi = K.log(y_clip)
+
+            log_prob = K.sum(log_pi * a_t, axis=1)
+
+            entropy = K.sum(y_clip * log_pi, axis=1)
+
+            td = (R_t - v_t)
+
+            p_loss = -log_prob * td
+
+            p_loss = p_loss + entropy * self.p_entropy_beta
+
+            return p_loss
+
+        return _inner_loss
+
+
+    def a3c_p_loss(self, p_network, v_network, R_t, a_t, v_t):
+
+        def _inner_loss(y_true, y_pred, *args, **kwargs):
+            """
+            TODO: use like keras.objectives.binary_crossentropy()
+            """
+
+            y_clip = K.clip(y_pred, 1e-20, 1.0)
+            log_prob = K.log(K.sum(y_clip * a_t, axis=1))
+            p_loss = -log_prob * (R_t - v_t)
+
+            v_loss = K.mean(K.square(R_t - v_t))
+
+            return p_loss
+
+        return _inner_loss
+
+
+    def a3c_v_loss(self, p_network, v_network, R_t):
+
+        def _inner_loss(y_true, y_pred, *args, **kwargs):
+
+            #o#v_loss = K.mean(K.square(R_t - v_t))
+            v_loss = K.mean(K.square(y_true - y_pred))
+            v_loss = 0.5 * v_loss
+
+            return v_loss
+
+        return _inner_loss
 
 
     def a3c_pv_loss__1(self, p_network, v_network, R_t, a_t):
@@ -140,9 +195,9 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
             #R_t = tf.placeholder("float", [None])
             #a_t = tf.placeholder("float", [None, ACTIONS])
 
-            log_prob = K.log(K.reduce_sum(K.mul(p_network, a_t), reduction_indices=1))
+            log_prob = K.log(K.sum(K.mul(p_network, a_t), reduction_indices=1))
             p_loss = -log_prob * (R_t - v_network)
-            v_loss = K.reduce_mean(K.square(R_t - v_network))  # TODO: could we use v_network ???
+            v_loss = K.mean(K.square(R_t - v_network))  # TODO: could we use v_network ???
 
             total_loss = p_loss + (0.5 * v_loss)
             return total_loss
@@ -153,45 +208,15 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
     def a3c_pv_loss(self, p_network, v_network, R_t, a_t, v_t):
 
         def _inner_loss(y_true, y_pred, *args, **kwargs):
-            """
-            TODO: use like keras.objectives.binary_crossentropy()
-            """
 
-            #R_t = tf.placeholder("float", [None])
-            #a_t = tf.placeholder("float", [None, ACTIONS])
-
-            #o#log_prob = K.log(K.sum(y_pred * a_t, axis=1))
-            log_prob = K.log(K.sum(y_pred * a_t, axis=1) + K.epsilon())
+            y_clip = K.clip(y_pred, 1e-20, 1.0)
+            log_prob = K.log(K.sum(y_clip * a_t, axis=1))
             p_loss = -log_prob * (R_t - v_t)
-            #x#p_loss = log_prob * (R_t - v_t)
 
             v_loss = K.mean(K.square(R_t - v_t))
 
-            #total_loss = p_loss + (0.5 * v_loss)  # TODO: only use p_loss ???
-            #return total_loss
-            return p_loss
-
-        return _inner_loss
-
-
-    def a3c_v_loss(self, p_network, v_network, R_t):
-
-        def _inner_loss(y_true, y_pred, *args, **kwargs):
-
-            #R_t = tf.placeholder("float", [None])
-            #a_t = tf.placeholder("float", [None, ACTIONS])
-
-            ##log_prob = K.log(K.reduce_sum(K.mul(y_pred, a_t), reduction_indices=1))
-            #log_prob = K.log(K.sum(y_pred * a_t, axis=1))
-            #p_loss = -log_prob * (R_t - v_t)
-            #v_loss = K.reduce_mean(K.square(R_t - v_t))
-            #o#v_loss = K.mean(K.square(R_t - v_t))
-            v_loss = K.mean(K.square(y_true - y_pred))
-            v_loss = 0.5 * v_loss
-
-            #total_loss = p_loss + (0.5 * v_loss)
-            #return total_loss
-            return v_loss
+            total_loss = p_loss + (0.5 * v_loss)
+            return total_loss
 
         return _inner_loss
 
@@ -231,10 +256,11 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
 
         adam = Adam(lr=self.lr)
 
-        pv_loss = self.a3c_pv_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        #p_loss = self.a3c_p_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        p_loss = self.a3c_p_loss_ent(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
         v_loss = self.a3c_v_loss(self.policy_network, self.value_network, self.R_t)
 
-        self.policy_network.compile(loss=pv_loss, optimizer=adam)
+        self.policy_network.compile(loss=p_loss, optimizer=adam)
         self.value_network.compile(loss=v_loss, optimizer=adam)
 
 

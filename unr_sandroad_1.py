@@ -77,10 +77,10 @@ def main():
         #'input_shape': (4, 72, 72),
         'pc_wh': 84 / 4,
         'actn': actn,
-        'lr': 1e-5,  #1e-4,  # 1e-6
+        'lr': 1e-3,  #1e-4  #1e-5,  # 1e-6
         'pc_wh': 84 / 4,
         'pc_cw': 11,
-        'pc_lambda': 1.0,
+        'pc_lambda': 0.0001, #1.0,
     }
     model = rr_model_unr.RRModelUnreal(md_cfg)
 
@@ -88,9 +88,9 @@ def main():
     trnr_cfg = {
         'thread_n': TRAINER_THREAD_N,
         #'if_render': True,
-        #'model_saved_file_p': 'models_saved/unr_sandroad_1_p.h5',
+        #'model_saved_file_p': 'models_saved/unr_sandroad_1_p.h5',  # reward_24
         #'model_saved_file_v': 'models_saved/unr_sandroad_1_v.h5',
-        'model_saved_file_p': 'models_saved/unr_sandroad_2_p.h5',
+        'model_saved_file_p': 'models_saved/unr_sandroad_2_p.h5',  # reward_25
         'model_saved_file_v': 'models_saved/unr_sandroad_2_v.h5',
         'model_saved_per': 20,
         'use_rp': True,

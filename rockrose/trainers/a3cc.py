@@ -52,6 +52,8 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
 
         self.lock = threading.Lock()
         self.thrds = []
+        self.tg_cfg = {}
+        self.tg_cfg['flag_stop_by_ctrl_c'] = False
 
         self.init()
 
@@ -114,6 +116,10 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
 
             #while not (terminal or ((t - t_start) == t_max)):
             while not ((t - t_start) == t_max):
+                #self.lock.acquire()
+                if self.tg_cfg['flag_stop_by_ctrl_c']:
+                    break
+                #self.lock.release()
 
                 self.hook_env_render()
 
@@ -165,6 +171,11 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
 
                     ##terminal = False
 
+            #self.lock.acquire()
+            if self.tg_cfg['flag_stop_by_ctrl_c']:
+                break
+            #self.lock.release()
+
             if terminal:
                 R_t = 0
             else:
@@ -183,7 +194,7 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
                 R_batch[i] = R_t
 
             # <3.1.1>
-            '''
+            #'''
             v_ts = []
             self.lock.acquire()
             for st in s_batch:
@@ -192,10 +203,10 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
                 v = self.model.predict_v(st)[0][0]
                 #self.lock.release()
                 v_ts.append(v)
-            self.lock.release()
-            '''
+            #self.lock.release()
+            #'''
 
-            self.lock.acquire()
+            #self.lock.acquire()
             loss = self.train_a_batch(t, s_batch, a_batch, R_batch, v_ts)
             if tid == 0:
                 print '=' * 20, tid, '    ', self.t
@@ -251,6 +262,9 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
             except KeyboardInterrupt:
                 print 'xxxxxxxxxxxxx'
                 #break
+                self.lock.acquire()
+                self.tg_cfg['flag_stop_by_ctrl_c'] = True
+                self.lock.release()
 
                 for t in self.thrds:
                     print t

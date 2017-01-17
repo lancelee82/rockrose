@@ -58,6 +58,8 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
 
         self.lock = threading.Lock()
         self.thrds = []
+        self.tg_cfg = {}
+        self.tg_cfg['flag_stop_by_ctrl_c'] = False
 
         self.init()
 
@@ -122,6 +124,10 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
 
             #while not (terminal or ((t - t_start) == t_max)):
             while not ((t - t_start) == t_max):
+                #self.lock.acquire()
+                if self.tg_cfg['flag_stop_by_ctrl_c']:
+                    break
+                #self.lock.release()
 
                 self.hook_env_render()
 
@@ -187,6 +193,11 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
 
                     last_action = 0
                     last_reward = 0
+
+            #self.lock.acquire()
+            if self.tg_cfg['flag_stop_by_ctrl_c']:
+                break
+            #self.lock.release()
 
             if terminal:
                 R_t = 0
@@ -476,6 +487,9 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
             except KeyboardInterrupt:
                 print 'xxxxxxxxxxxxx'
                 #break
+                self.lock.acquire()
+                self.tg_cfg['flag_stop_by_ctrl_c'] = True
+                self.lock.release()
 
                 for t in self.thrds:
                     print t
