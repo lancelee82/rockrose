@@ -66,9 +66,12 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
                 print e
 
 
-    def hook_env_render(self):
+    def hook_env_render(self, env=None):
+        if not env:
+            env = self.env
+
         if self.if_render:
-            self.env.render()
+            env.render()
 
 
     def sample_policy_action(self, num_actions, probs):
@@ -94,6 +97,7 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
         self.lock.acquire()
         x_t = env.reset()
         s_t = self.prepr.process(x_t)
+        #print 's_t', s_t[0][0][42][42]  # lk dbg 20170213-1
         self.lock.release()
 
         terminal = False
@@ -121,7 +125,7 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
                     break
                 #self.lock.release()
 
-                self.hook_env_render()
+                self.hook_env_render(env)
 
                 self.lock.acquire()
                 #probs = self.model.policy_network.predict(s_t)[0]
@@ -140,6 +144,7 @@ class RRTrainerA3C(rr_trainer_base.RRTrainerBase):
                 self.lock.acquire()
                 x_t1_colored, r_t, terminal, info = env.step(action_index)
                 s_t1 = self.prepr.process(x_t1_colored, s_t)
+                #print 's_t1', s_t1[0][0][42][42]  # lk dbg 20170213-1
                 self.lock.release()
 
                 #r_t = np.clip(r_t, -1, 1)

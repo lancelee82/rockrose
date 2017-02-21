@@ -70,9 +70,12 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
             except Exception as e:
                 print e
 
-    def hook_env_render(self):
+    def hook_env_render(self, env=None):
+        if not env:
+            env = self.env
+
         if self.if_render:
-            self.env.render()
+            env.render()
 
     def sample_policy_action(self, num_actions, probs):
         """
@@ -129,7 +132,7 @@ class RRTrainerUnreal(rr_trainer_base.RRTrainerBase):
                     break
                 #self.lock.release()
 
-                self.hook_env_render()
+                self.hook_env_render(env)
 
                 self.lock.acquire()
                 last_a_r = np.zeros((1, 1, self.n_actions + 1))

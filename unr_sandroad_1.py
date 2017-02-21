@@ -98,7 +98,7 @@ def main():
         'use_pc': True,
         'pc_wh': 84 / 4,
     }
-    if 1:
+    if 0:
         trnr = rr_trainer_unr.RRTrainerUnreal(trnr_cfg, envs, model, prepr, rmem)
         #trnr.train_a_thread(0)
         trnr.train()

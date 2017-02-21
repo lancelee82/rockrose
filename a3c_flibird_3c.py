@@ -16,7 +16,7 @@ from bluegym import env_bluelake
 
 
 ENV_GAME_NAME = 'Flibird-v0'
-TRAINER_THREAD_N = 10#4
+TRAINER_THREAD_N = 16#10#4
 
 
 def env_reg():
@@ -61,7 +61,7 @@ def main():
 
     #prepr = preprocessor.RRPreprImgGrayN(4, out_size=(84, 84))
     prepr = preprocessor.RRPreprImgGrayN4R(4, out_size=(84, 84))
-    #prepr = RRPreprImgGrayN_RZeroTo(4, out_size=(84, 84))
+    #t#prepr = RRPreprImgGrayN_RZeroTo(4, out_size=(84, 84))
 
     actn = len(envs[0]._action_set)
     md_cfg = {
@@ -78,7 +78,7 @@ def main():
         'model_saved_file_v': 'models_saved/a3c_flibird_3c_1_v.h5',
         'model_saved_per': 100,
     }
-    if 1:
+    if 0:
         trnr = rr_trainer_a3cc.RRTrainerA3C(trnr_cfg, envs, model, prepr, rmem)
         #trnr.train_a_thread(0)
         trnr.train()

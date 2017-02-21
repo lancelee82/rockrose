@@ -54,7 +54,7 @@ def main():
 
     rmem = replay_memory.ReplayMemory(50000)
 
-    #prepr = preprocessor.RRPreprImgGrayN(4, out_size=(84, 84))
+    #t#prepr = preprocessor.RRPreprImgGrayN(4, out_size=(84, 84))
     prepr = preprocessor.RRPreprImgGrayN4R(4, out_size=(84, 84))
     #prepr = RRPreprImgGrayN_FailToLarge(4, out_size=(84, 84))
 
@@ -62,7 +62,7 @@ def main():
     md_cfg = {
         'input_shape': (4, 84, 84),
         'actn': actn,
-        'lr': 5e-5,  # 1e-5,  #1e-4,  # 1e-6
+        'lr': 1e-5,  #5e-5,  # 1e-3,  #1e-4,  # 1e-6
     }
     model = rr_model_a3cc.RRModelA3CConvPV(md_cfg)
 

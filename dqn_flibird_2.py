@@ -61,12 +61,17 @@ def main():
     }
     model = rr_model_dqn.RRModelDQNConv(md_cfg)
 
+    if args.model:
+        model_saved_file = args.model
+    else:
+        model_saved_file = 'models_saved/dqn_flibird_2_1.h5'
+
     if args.mode == 'play':
         trnr_cfg_play = {
             'is_play': True,
             'init_epsilon': 0.0001,
             #'if_render': True,
-            'model_saved_file': 'models_saved/dqn_flibird_2_1.h5',
+            'model_saved_file': model_saved_file,
         }
         trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg_play, env, model, prepr, rmem)
         trnr.play()
@@ -75,7 +80,7 @@ def main():
             'is_play': False,
             'init_epsilon': 0.3,
             #'if_render': True,
-            'model_saved_file': 'models_saved/dqn_flibird_2_1.h5',
+            'model_saved_file': model_saved_file,
             'model_saved_per': 300,
         }
         trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg_train, env, model, prepr, rmem)

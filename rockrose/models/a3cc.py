@@ -123,8 +123,8 @@ class RRModelA3CConvPV(rr_model_base.RRModelBase):
 
         adam = Adam(lr=self.lr)
 
-        #p_loss = self.a3c_p_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
-        p_loss = self.a3c_p_loss_ent(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        p_loss = self.a3c_p_loss(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
+        #p_loss = self.a3c_p_loss_ent(self.policy_network, self.value_network, self.R_t, self.a_t, self.v_t)
         v_loss = self.a3c_v_loss(self.policy_network, self.value_network, self.R_t)
 
         self.policy_network.compile(loss=p_loss, optimizer=adam)
