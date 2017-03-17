@@ -5,6 +5,8 @@ import random
 
 import numpy as np
 
+import argparse
+
 import gym
 
 from rockrose import preprocessor
@@ -41,6 +43,12 @@ def env_reg():
 
 
 def main():
+
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-m','--mode', help='train / play')
+    parser.add_argument('-i','--model', help='model file names')
+    args = parser.parse_args()
+
     env = env_reg()
 
     rmem = replay_memory.ReplayMemory(50000)
@@ -54,23 +62,24 @@ def main():
     }
     model = rr_model_dqn.RRModelDQNConv(md_cfg)
 
-    #trnr_cfg = {
-    #    'is_play': True,
-    #    'init_epsilon': 0.0001,
-    #    'model_saved_file': 'models_saved/dqn_floodit_1_1.h5',
-    #}
-    #trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg, env, model, prepr, rmem)
-    #trnr.play()
-
-    trnr_cfg_train = {
-        'is_play': False,
-        'init_epsilon': 0.3,
-        #'if_render': True,
-        'model_saved_file': 'models_saved/dqn_floodit_1_1.h5',
-        'model_saved_per': 300,
-    }
-    trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg_train, env, model, prepr, rmem)
-    trnr.train()
+    if args.mode == 'train':
+        trnr_cfg_train = {
+            'is_play': False,
+            'init_epsilon': 0.3,
+            #'if_render': True,
+            'model_saved_file': 'models_saved/dqn_floodit_1_1.h5',
+            'model_saved_per': 300,
+        }
+        trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg_train, env, model, prepr, rmem)
+        trnr.train()
+    else:
+        trnr_cfg = {
+            'is_play': True,
+            'init_epsilon': 0.0001,
+            'model_saved_file': 'models_saved/dqn_floodit_1_1.h5',
+        }
+        trnr = rr_trainer_dqn.RRTrainerDQN(trnr_cfg, env, model, prepr, rmem)
+        trnr.play()
 
 
 if __name__ == '__main__':

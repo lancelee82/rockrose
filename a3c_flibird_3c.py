@@ -5,6 +5,8 @@ import random
 
 import numpy as np
 
+import argparse
+
 import gym
 
 from rockrose import preprocessor
@@ -51,6 +53,12 @@ class RRPreprImgGrayN_FailToLarge(preprocessor.RRPreprImgGrayN4R):
 
 
 def main():
+
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-m','--mode', help='train / play')
+    parser.add_argument('-i','--model', help='model file names')
+    args = parser.parse_args()
+
     env_reg()
 
     envs = []
@@ -78,7 +86,8 @@ def main():
         'model_saved_file_v': 'models_saved/a3c_flibird_3c_1_v.h5',
         'model_saved_per': 100,
     }
-    if 0:
+
+    if args.mode == 'train':
         trnr = rr_trainer_a3cc.RRTrainerA3C(trnr_cfg, envs, model, prepr, rmem)
         #trnr.train_a_thread(0)
         trnr.train()
